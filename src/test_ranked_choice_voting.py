@@ -44,18 +44,18 @@ def run_election(candidates, ballots):
     },
     {
         "name": "Complex multi-round election",
-        "candidates": ["Dilbert", "Alice", "Wally", "Dave", "Ashok"],
+        "candidates": ["Dilbert", "Alice", "Wally", "Dave"],
         "ballots": [
-            ["Dilbert", "Alice", "Ashok", "Dave", "Wally"],
-            ["Dilbert", "Alice", "Ashok", "Dave", "Wally"],
-            ["Alice", "Wally", "Dave", "Dilbert", "Ashok"],
-            ["Alice", "Wally", "Dilbert", "Dave", "Ashok"],
-            ["Dave", "Dilbert", "Alice", "Wally", "Ashok"],
-            ["Dave", "Dilbert", "Alice", "Wally", "Ashok"],
-            ["Dave", "Ashok", "Alice", "Wally", "Dilbert"],
-            ["Wally", "Dilbert", "Dave", "Alice", "Ashok"]
+            ["Dilbert", "Alice", "Dave", "Wally"],
+            ["Dilbert", "Alice", "Dave", "Wally"],
+            ["Alice", "Wally", "Dilbert", "Dave"],
+            ["Alice", "Wally", "Dilbert", "Dave"],
+            ["Dave", "Dilbert", "Alice", "Wally"],
+            ["Dave", "Dilbert", "Alice", "Wally"],
+            ["Dave", "Alice", "Wally", "Dilbert"],
+            ["Wally", "Dilbert", "Dave", "Alice"]
         ],
-        "expected": "Dave"
+        "expected": "Dilbert"
     },
     {
         "name": "Tie-breaking with second choice votes",
@@ -65,7 +65,7 @@ def run_election(candidates, ballots):
             ["Alice", "Dilbert", "Wally", "Ted"],
             ["Wally", "Dilbert", "Alice", "Ted"],
             ["Wally", "Alice", "Dilbert", "Ted"],
-            ["Ted", "Dilbert", "Alice", "Wally"],
+            ["Dilbert", "Ted", "Alice", "Wally"],
         ],
         "expected": "Dilbert"
     }

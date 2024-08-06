@@ -51,24 +51,14 @@ class Election:
                 counts[choice] += 1
         return counts
 
-    def count_second_choice_votes(self, tied_candidates):
-        second_choice_counts = defaultdict(int)
+    def eliminate_candidate(self, candidate):
+        candidate.eliminated = True
+        # Reset all ballots to allow recounting
         for ballot in self.ballots:
-            if ballot.rankings[0] in tied_candidates:
-                second_choice = ballot.get_second_choice()
-                if second_choice and second_choice in tied_candidates:
-                    second_choice_counts[second_choice] += 1
-        return second_choice_counts
-
-    def eliminate_candidates(self, candidates_to_eliminate):
-        for candidate in candidates_to_eliminate:
-            candidate.eliminated = True
+            ballot.current_rank = 0
 
     def is_tie(self, vote_counts):
         return len(set(vote_counts.values())) == 1 and len(vote_counts) > 1
-
-    def any_ballots_have_more_choices(self):
-        return any(ballot.has_more_choices() for ballot in self.ballots)
 
     def run_election(self):
         while True:
@@ -80,38 +70,21 @@ class Election:
 
             total_votes = sum(vote_counts.values())
             
-            is_tie_round = self.is_tie(vote_counts)
-            
-            if is_tie_round:
-                tied_candidates = list(vote_counts.keys())
-                second_choice_counts = self.count_second_choice_votes(tied_candidates)
-                
-                if second_choice_counts:
-                    max_second_choices = max(second_choice_counts.values())
-                    winners = [c for c, v in second_choice_counts.items() if v == max_second_choices]
-                    
-                    if len(winners) == 1:
-                        self.rounds.append(Round(vote_counts.copy(), is_tie=True, tie_broken=True))
-                        return winners[0].name
-                
-                if not self.any_ballots_have_more_choices():
-                    self.rounds.append(Round(vote_counts.copy(), is_tie=True))
-                    return "No winner"
-                
-                print(f"Tie detected in round {len(self.rounds) + 1}. Moving to next choices.")
-                self.rounds.append(Round(vote_counts.copy(), is_tie=True))
-                continue
-            
             self.rounds.append(Round(vote_counts.copy()))
             
             for candidate, votes in vote_counts.items():
                 if votes > total_votes / 2:
                     return candidate.name
 
+            if self.is_tie(vote_counts):
+                self.rounds[-1].is_tie = True
+                return "No winner"
+
             min_votes = min(vote_counts.values())
             candidates_to_eliminate = [c for c, v in vote_counts.items() if v == min_votes]
             
-            self.eliminate_candidates(candidates_to_eliminate)
+            for candidate in candidates_to_eliminate:
+                self.eliminate_candidate(candidate)
             self.rounds[-1].eliminated_candidate = ", ".join([c.name for c in candidates_to_eliminate])
             
             remaining_candidates = [c for c in self.candidates.values() if not c.eliminated]
