@@ -125,36 +125,51 @@ def run_all_tests():
     tests = [
         {
             "name": "Simple Majority Winner",
-            "candidates": ["Alice", "Bob", "Charlie"],
+            "candidates": ["Alice", "Wally", "Dilbert"],
             "ballots": [
-                ["Alice", "Bob", "Charlie"],
-                ["Alice", "Charlie", "Bob"],
-                ["Bob", "Alice", "Charlie"],
-                ["Alice", "Bob", "Charlie"]
+                ["Alice", "Wally", "Dilbert"],
+                ["Alice", "Dilbert", "Wally"],
+                ["Wally", "Alice", "Dilbert"],
+                ["Alice", "Wally", "Dilbert"]
             ],
             "expected": "Alice"
         },
         {
-            "name": "Runoff Required",
-            "candidates": ["Alice", "Bob", "Charlie"],
+            "name": "Tie for biggest losers",
+            "candidates": ["Alice", "Wally", "Dilbert"],
             "ballots": [
-                ["Alice", "Bob", "Charlie"],
-                ["Bob", "Alice", "Charlie"],
-                ["Charlie", "Alice", "Bob"],
-                ["Charlie", "Bob", "Alice"]
+                ["Alice", "Wally", "Dilbert"],
+                ["Wally", "Alice", "Dilbert"],
+                ["Dilbert", "Alice", "Wally"],
+                ["Dilbert", "Wally", "Alice"]
             ],
-            "expected": "Charlie"
+            "expected": "Dilbert"
         },
         {
-            "name": "Tie Result",
-            "candidates": ["Alice", "Bob", "Charlie", "David"],
+            "name": "Tie all the way",
+            "candidates": ["Alice", "Wally", "Dilbert", "Dave"],
             "ballots": [
-                ["Alice", "Bob", "Charlie", "David"],
-                ["Bob", "Charlie", "David", "Alice"],
-                ["Charlie", "David", "Alice", "Bob"],
-                ["David", "Alice", "Bob", "Charlie"]
+                ["Alice", "Wally", "Dilbert", "Dave"],
+                ["Wally", "Dilbert", "Dave", "Alice"],
+                ["Dilbert", "Dave", "Alice", "Wally"],
+                ["Dave", "Alice", "Wally", "Dilbert"]
             ],
             "expected": "No winner"
+        },
+        {
+            "name": "Checks history",
+            "candidates": ["Alice", "Wally", "Dilbert", "Dave", "Ashok"],
+            "ballots": [
+                ["Alice", "Wally", "Ashok", "Dave", "Dilbert"],
+                ["Alice", "Wally", "Ashok", "Dave", "Dilbert"],
+                ["Wally", "Dilbert", "Dave", "Alice", "Ashok"],
+                ["Wally", "Dilbert", "Alice", "Dave", "Ashok"],
+                ["Dave", "Alice", "Wally", "Dilbert", "Ashok"],
+                ["Dave", "Alice", "Wally", "Dilbert", "Ashok"],
+                ["Dave", "Ashok", "Wally", "Dilbert", "Ashok"],
+                ["Dilbert", "Alice", "Alice", "Wally", "Ashok"]
+            ],
+            "expected": "Runoff, Dave wins in runoff"
         }
     ]
 
