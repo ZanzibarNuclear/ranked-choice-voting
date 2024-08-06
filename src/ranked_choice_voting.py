@@ -51,14 +51,14 @@ class Election:
                 counts[choice] += 1
         return counts
 
-    def count_second_choice_votes(self, tied_candidates):
-        second_choice_counts = defaultdict(int)
+    def count_next_choice_votes(self, candidates_to_check):
+        next_choice_counts = defaultdict(int)
         for ballot in self.ballots:
-            if ballot.rankings[0] in tied_candidates:
-                second_choice = ballot.get_second_choice()
-                if second_choice and second_choice in tied_candidates:
-                    second_choice_counts[second_choice] += 1
-        return second_choice_counts
+            for choice in ballot.rankings[1:]:  # Start from the second choice
+                if choice in candidates_to_check and not choice.eliminated:
+                    next_choice_counts[choice] += 1
+                    break
+        return next_choice_counts
 
     def eliminate_candidate(self, candidate):
         candidate.eliminated = True
@@ -81,17 +81,19 @@ class Election:
             
             self.rounds.append(Round(vote_counts.copy()))
             
+            # Check for a winner
             for candidate, votes in vote_counts.items():
                 if votes > total_votes / 2:
                     return candidate.name
 
+            # Check for a tie
             if self.is_tie(vote_counts):
                 tied_candidates = list(vote_counts.keys())
-                second_choice_counts = self.count_second_choice_votes(tied_candidates)
+                next_choice_counts = self.count_next_choice_votes(self.candidates.values())
                 
-                if second_choice_counts:
-                    max_second_choices = max(second_choice_counts.values())
-                    winners = [c for c, v in second_choice_counts.items() if v == max_second_choices]
+                if next_choice_counts:
+                    max_next_choices = max(next_choice_counts.values())
+                    winners = [c for c, v in next_choice_counts.items() if v == max_next_choices]
                     
                     if len(winners) == 1:
                         self.rounds[-1].is_tie = True
@@ -101,6 +103,7 @@ class Election:
                 self.rounds[-1].is_tie = True
                 return "No winner"
 
+            # Eliminate the candidate(s) with the least votes
             min_votes = min(vote_counts.values())
             candidates_to_eliminate = [c for c, v in vote_counts.items() if v == min_votes]
             
