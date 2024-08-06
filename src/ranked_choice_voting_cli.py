@@ -50,6 +50,23 @@ def load_election(filename):
     
     return election
 
+def visualize_results(election):
+    max_name_length = max(len(candidate.name) for candidate in election.candidates.values())
+    max_votes = max(max(round.vote_counts.values()) for round in election.rounds)
+    
+    for i, round in enumerate(election.rounds, 1):
+        print(f"\nRound {i}:")
+        for candidate, votes in round.vote_counts.items():
+            bar_length = int((votes / max_votes) * 40)  # Scale to 40 characters max
+            print(f"{candidate.name.ljust(max_name_length)} | {votes:4d} {'█' * bar_length}")
+        
+        if round.eliminated_candidate:
+            print(f"Eliminated: {round.eliminated_candidate}")
+        if round.is_tie:
+            print("This round was a tie.")
+            if round.tie_broken:
+                print("Tie broken using next choice votes.")
+
 def main():
     print("Welcome to the Ranked Choice Voting System!")
     
@@ -57,9 +74,10 @@ def main():
         print("\nChoose an option:")
         print("1. Create a new election")
         print("2. Load an existing election")
-        print("3. Exit")
+        print("3. Visualize a saved election")
+        print("4. Exit")
         
-        choice = input("Enter your choice (1-3): ").strip()
+        choice = input("Enter your choice (1-4): ").strip()
         
         if choice == '1':
             candidates = get_candidates()
@@ -93,24 +111,44 @@ def main():
                 continue
         
         elif choice == '3':
+            filename = input("Enter the filename of the saved election: ").strip()
+            try:
+                election = load_election(filename)
+                print(f"Election loaded from {filename}")
+                
+                if not election.rounds:
+                    print("This election hasn't been run yet. Running the election...")
+                    election.run_election()
+                
+                visualize_results(election)
+                
+            except FileNotFoundError:
+                print(f"Error: File {filename} not found.")
+                continue
+            except json.JSONDecodeError:
+                print(f"Error: File {filename} is not a valid JSON file.")
+                continue
+        
+        elif choice == '4':
             print("Thank you for using the Ranked Choice Voting System. Goodbye!")
             break
         
         else:
-            print("Invalid choice. Please enter 1, 2, or 3.")
+            print("Invalid choice. Please enter 1, 2, 3, or 4.")
             continue
 
-        print("\nRunning the election...")
-        winner = election.run_election()
-        
-        print("\nElection Results:")
-        election.print_results()
-        print(f"\nThe winner is: {winner}")
+        if choice in ['1', '2']:
+            print("\nRunning the election...")
+            winner = election.run_election()
+            
+            print("\nElection Results:")
+            election.print_results()
+            print(f"\nThe winner is: {winner}")
 
-        save_choice = input("\nDo you want to save this election? (y/n): ").strip().lower()
-        if save_choice == 'y':
-            filename = input("Enter a filename to save to: ").strip()
-            save_election(election, filename)
+            save_choice = input("\nDo you want to save this election? (y/n): ").strip().lower()
+            if save_choice == 'y':
+                filename = input("Enter a filename to save to: ").strip()
+                save_election(election, filename)
 
 if __name__ == "__main__":
     main()
