@@ -14,6 +14,7 @@ class RankedChoiceVotingGUI:
 
         self.create_new_election_tab()
         self.load_existing_election_tab()
+        self.save_election_tab()
         self.view_results_tab()
 
         self.election = None
@@ -50,6 +51,16 @@ class RankedChoiceVotingGUI:
         self.notebook.add(tab, text="Load Existing Election")
 
         ttk.Button(tab, text="Select File", command=self.load_election).pack(pady=20)
+
+    def save_election_tab(self):
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="Save Election")
+
+        ttk.Label(tab, text="Save current election:").pack(pady=20)
+        ttk.Button(tab, text="Save Election", command=self.save_election).pack(pady=10)
+
+        self.save_status = ttk.Label(tab, text="")
+        self.save_status.pack(pady=10)
 
     def view_results_tab(self):
         tab = ttk.Frame(self.notebook)
@@ -172,6 +183,29 @@ class RankedChoiceVotingGUI:
 
         self.info_text.delete(1.0, tk.END)
         self.info_text.insert(tk.END, info)
+
+    def save_election(self):
+        if not self.election:
+            messagebox.showerror("Error", "No election to save. Please create or load an election first.")
+            return
+
+        file_path = filedialog.asksaveasfilename(defaultextension=".json",
+                                                 filetypes=[("JSON files", "*.json")])
+        if not file_path:
+            return  # User cancelled the save operation
+
+        try:
+            election_data = {
+                "candidates": [candidate.name for candidate in self.election.candidates.values()],
+                "ballots": [[candidate.name for candidate in ballot.rankings] for ballot in self.election.ballots]
+            }
+
+            with open(file_path, 'w') as f:
+                json.dump(election_data, f, indent=2)
+
+            self.save_status.config(text=f"Election saved successfully to {file_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save election: {str(e)}")
 
 if __name__ == "__main__":
     root = tk.Tk()
