@@ -1,0 +1,33 @@
+{
+  "candidates": [
+    "Billy",
+    "Bob",
+    "Bubba"
+  ],
+  "ballots": [
+    [
+      "Bob",
+      "Bubba",
+      "Billy"
+    ],
+    [
+      "Billy",
+      "Bubba",
+      "Bob"
+    ],
+    [
+      "Bubba",
+      "Billy",
+      "Bob"
+    ],
+    [
+      "Bubba",
+      "Bob",
+      "Billy"
+    ],
+    [
+      "Billy",
+      "Bob"
+    ]
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "candidates": [
+    "J Frost",
+    "J Sprat",
+    "J Andjill",
+    "J Beanstalk",
+    "J Handy",
+    "J Jack"
+  ],
+  "ballots": [
+    [
+      "J Sprat",
+      "J Frost",
+      "J Beanstalk",
+      "J Andjill",
+      "J Jack",
+      "J Handy"
+    ],
+    [
+      "J Andjill",
+      "J Sprat",
+      "J Beanstalk",
+      "J Frost",
+      "J Jack",
+      "J Handy"
+    ],
+    [
+      "J Beanstalk",
+      "J Handy",
+      "J Jack",
+      "J Andjill",
+      "J Sprat",
+      "J Frost"
+    ],
+    [
+      "J Andjill",
+      "J Frost",
+      "J Jack",
+      "J Handy",
+      "J Beanstalk",
+      "J Sprat"
+    ]
+  ]
+}
