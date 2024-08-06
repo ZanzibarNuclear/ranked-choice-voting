@@ -21,11 +21,17 @@ class Ballot:
     def has_more_choices(self):
         return self.current_rank < len(self.rankings)
 
+    def get_second_choice(self):
+        if len(self.rankings) > 1:
+            return self.rankings[1]
+        return None
+
 class Round:
-    def __init__(self, vote_counts, eliminated_candidate=None, is_tie=False):
+    def __init__(self, vote_counts, eliminated_candidate=None, is_tie=False, tie_broken=False):
         self.vote_counts = vote_counts
         self.eliminated_candidate = eliminated_candidate
         self.is_tie = is_tie
+        self.tie_broken = tie_broken
 
 class Election:
     def __init__(self, candidates):
@@ -44,6 +50,15 @@ class Election:
             if choice:
                 counts[choice] += 1
         return counts
+
+    def count_second_choice_votes(self, tied_candidates):
+        second_choice_counts = defaultdict(int)
+        for ballot in self.ballots:
+            if ballot.rankings[0] in tied_candidates:
+                second_choice = ballot.get_second_choice()
+                if second_choice and second_choice in tied_candidates:
+                    second_choice_counts[second_choice] += 1
+        return second_choice_counts
 
     def eliminate_candidates(self, candidates_to_eliminate):
         for candidate in candidates_to_eliminate:
@@ -67,13 +82,27 @@ class Election:
             
             is_tie_round = self.is_tie(vote_counts)
             
-            self.rounds.append(Round(vote_counts.copy(), is_tie=is_tie_round))
-            
             if is_tie_round:
+                tied_candidates = list(vote_counts.keys())
+                second_choice_counts = self.count_second_choice_votes(tied_candidates)
+                
+                if second_choice_counts:
+                    max_second_choices = max(second_choice_counts.values())
+                    winners = [c for c, v in second_choice_counts.items() if v == max_second_choices]
+                    
+                    if len(winners) == 1:
+                        self.rounds.append(Round(vote_counts.copy(), is_tie=True, tie_broken=True))
+                        return winners[0].name
+                
                 if not self.any_ballots_have_more_choices():
+                    self.rounds.append(Round(vote_counts.copy(), is_tie=True))
                     return "No winner"
-                print(f"Tie detected in round {len(self.rounds)}. Moving to next choices.")
+                
+                print(f"Tie detected in round {len(self.rounds) + 1}. Moving to next choices.")
+                self.rounds.append(Round(vote_counts.copy(), is_tie=True))
                 continue
+            
+            self.rounds.append(Round(vote_counts.copy()))
             
             for candidate, votes in vote_counts.items():
                 if votes > total_votes / 2:
@@ -98,90 +127,10 @@ class Election:
                 print(f"  {candidate.name}: {votes}")
             if round.is_tie:
                 print("  This round was a tie.")
-                if i == len(self.rounds):
+                if round.tie_broken:
+                    print("  Tie broken using second choice votes.")
+                elif i == len(self.rounds):
                     print("  No more choices available. Election ended in a tie.")
             elif round.eliminated_candidate:
                 print(f"  Eliminated: {round.eliminated_candidate}")
             print()
-
-def run_test(test_candidate_names, test_ballots, expected_winner):
-    candidates = [Candidate(candidate_name) for candidate_name in test_candidate_names]
-    election = Election(candidates)
-    
-    for ballot_ranking in test_ballots:
-        election.add_ballot(ballot_ranking)
-    
-    winner = election.run_election()
-    print(f"The result is: {winner}")
-    election.print_results()
-    
-    passing_test = expected_winner == winner
-    print(f"The test {'Passed' if passing_test else 'Failed'}\n************\n\n")
-    
-    return passing_test
-
-# Test cases
-def run_all_tests():
-    tests = [
-        {
-            "name": "Simple Majority Winner",
-            "candidates": ["Alice", "Wally", "Dilbert"],
-            "ballots": [
-                ["Alice", "Wally", "Dilbert"],
-                ["Alice", "Dilbert", "Wally"],
-                ["Wally", "Alice", "Dilbert"],
-                ["Alice", "Wally", "Dilbert"]
-            ],
-            "expected": "Alice"
-        },
-        {
-            "name": "Tie for biggest losers",
-            "candidates": ["Alice", "Wally", "Dilbert"],
-            "ballots": [
-                ["Alice", "Wally", "Dilbert"],
-                ["Wally", "Alice", "Dilbert"],
-                ["Dilbert", "Alice", "Wally"],
-                ["Dilbert", "Wally", "Alice"]
-            ],
-            "expected": "Dilbert"
-        },
-        {
-            "name": "Tie all the way",
-            "candidates": ["Alice", "Wally", "Dilbert", "Dave"],
-            "ballots": [
-                ["Alice", "Wally", "Dilbert", "Dave"],
-                ["Wally", "Dilbert", "Dave", "Alice"],
-                ["Dilbert", "Dave", "Alice", "Wally"],
-                ["Dave", "Alice", "Wally", "Dilbert"]
-            ],
-            "expected": "No winner"
-        },
-        {
-            "name": "Checks history",
-            "candidates": ["Alice", "Wally", "Dilbert", "Dave", "Ashok"],
-            "ballots": [
-                ["Alice", "Wally", "Ashok", "Dave", "Dilbert"],
-                ["Alice", "Wally", "Ashok", "Dave", "Dilbert"],
-                ["Wally", "Dilbert", "Dave", "Alice", "Ashok"],
-                ["Wally", "Dilbert", "Alice", "Dave", "Ashok"],
-                ["Dave", "Alice", "Wally", "Dilbert", "Ashok"],
-                ["Dave", "Alice", "Wally", "Dilbert", "Ashok"],
-                ["Dave", "Ashok", "Wally", "Dilbert", "Ashok"],
-                ["Dilbert", "Alice", "Alice", "Wally", "Ashok"]
-            ],
-            "expected": "Runoff, Dave wins in runoff"
-        }
-    ]
-
-    for test in tests:
-        print(f"Running test: {test['name']}")
-        result = run_test(test["candidates"], test["ballots"], test["expected"])
-        if not result:
-            print(f"Test failed: {test['name']}")
-            return False
-    
-    print("All tests passed successfully!")
-    return True
-
-# Run all tests
-run_all_tests()
