@@ -7,7 +7,7 @@ class RankedChoiceVotingGUI:
     def __init__(self, master):
         self.master = master
         self.master.title("Ranked Choice Voting System")
-        self.master.geometry("600x400")
+        self.master.geometry("800x600")
 
         self.notebook = ttk.Notebook(self.master)
         self.notebook.pack(expand=True, fill="both")
@@ -17,6 +17,7 @@ class RankedChoiceVotingGUI:
         self.view_results_tab()
 
         self.election = None
+        self.candidate_rankings = {}
 
     def create_new_election_tab(self):
         tab = ttk.Frame(self.notebook)
@@ -28,14 +29,12 @@ class RankedChoiceVotingGUI:
         self.candidate_entry.grid(row=0, column=1, padx=10, pady=5)
         ttk.Button(tab, text="Add Candidate", command=self.add_candidate).grid(row=0, column=2, padx=10, pady=5)
 
-        self.candidates_listbox = tk.Listbox(tab)
-        self.candidates_listbox.grid(row=1, column=0, columnspan=3, padx=10, pady=5, sticky="nsew")
+        self.candidates_frame = ttk.Frame(tab)
+        self.candidates_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=5, sticky="nsew")
 
         # Ballot section
-        ttk.Label(tab, text="Add Ballot (comma-separated):").grid(row=2, column=0, padx=10, pady=5)
-        self.ballot_entry = ttk.Entry(tab)
-        self.ballot_entry.grid(row=2, column=1, padx=10, pady=5)
-        ttk.Button(tab, text="Add Ballot", command=self.add_ballot).grid(row=2, column=2, padx=10, pady=5)
+        ttk.Label(tab, text="Create Ballot:").grid(row=2, column=0, padx=10, pady=5)
+        ttk.Button(tab, text="Submit Ballot", command=self.submit_ballot).grid(row=2, column=1, padx=10, pady=5)
 
         self.ballots_listbox = tk.Listbox(tab)
         self.ballots_listbox.grid(row=3, column=0, columnspan=3, padx=10, pady=5, sticky="nsew")
@@ -70,22 +69,50 @@ class RankedChoiceVotingGUI:
     def add_candidate(self):
         candidate = self.candidate_entry.get().strip()
         if candidate:
-            self.candidates_listbox.insert(tk.END, candidate)
+            if candidate in self.candidate_rankings:
+                messagebox.showerror("Error", "This candidate already exists.")
+                return
+            self.candidate_rankings[candidate] = tk.StringVar()
+            self.update_candidate_list()
             self.candidate_entry.delete(0, tk.END)
 
-    def add_ballot(self):
-        ballot = self.ballot_entry.get().strip()
-        if ballot:
-            self.ballots_listbox.insert(tk.END, ballot)
-            self.ballot_entry.delete(0, tk.END)
+    def update_candidate_list(self):
+        for widget in self.candidates_frame.winfo_children():
+            widget.destroy()
+
+        for i, (candidate, var) in enumerate(self.candidate_rankings.items()):
+            ttk.Label(self.candidates_frame, text=candidate).grid(row=i, column=0, padx=5, pady=2)
+            ranking_dropdown = ttk.Combobox(self.candidates_frame, textvariable=var, 
+                                            values=list(range(1, len(self.candidate_rankings) + 1)), 
+                                            state="readonly", width=5)
+            ranking_dropdown.grid(row=i, column=1, padx=5, pady=2)
+            ranking_dropdown.set("")  # Clear the initial selection
+
+    def submit_ballot(self):
+        rankings = {candidate: int(var.get()) if var.get() else float('inf') 
+                    for candidate, var in self.candidate_rankings.items()}
+        if not rankings or all(rank == float('inf') for rank in rankings.values()):
+            messagebox.showerror("Error", "Please rank at least one candidate.")
+            return
+        sorted_ballot = sorted(rankings, key=rankings.get)
+        self.ballots_listbox.insert(tk.END, ", ".join(sorted_ballot))
+        for var in self.candidate_rankings.values():
+            var.set("")  # Clear rankings after submission
 
     def run_election(self):
-        candidates = [Candidate(c) for c in self.candidates_listbox.get(0, tk.END)]
+        if not self.candidate_rankings:
+            messagebox.showerror("Error", "Please add candidates before running the election.")
+            return
+        if self.ballots_listbox.size() == 0:
+            messagebox.showerror("Error", "Please add at least one ballot before running the election.")
+            return
+
+        candidates = [Candidate(c) for c in self.candidate_rankings.keys()]
         self.election = Election(candidates)
 
         for ballot in self.ballots_listbox.get(0, tk.END):
             try:
-                self.election.add_ballot(ballot.split(','))
+                self.election.add_ballot(ballot.split(', '))
             except InvalidBallotException as e:
                 messagebox.showerror("Invalid Ballot", str(e))
                 return
