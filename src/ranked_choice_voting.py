@@ -51,6 +51,15 @@ class Election:
                 counts[choice] += 1
         return counts
 
+    def count_second_choice_votes(self, tied_candidates):
+        second_choice_counts = defaultdict(int)
+        for ballot in self.ballots:
+            if ballot.rankings[0] in tied_candidates:
+                second_choice = ballot.get_second_choice()
+                if second_choice and second_choice in tied_candidates:
+                    second_choice_counts[second_choice] += 1
+        return second_choice_counts
+
     def eliminate_candidate(self, candidate):
         candidate.eliminated = True
         # Reset all ballots to allow recounting
@@ -77,6 +86,18 @@ class Election:
                     return candidate.name
 
             if self.is_tie(vote_counts):
+                tied_candidates = list(vote_counts.keys())
+                second_choice_counts = self.count_second_choice_votes(tied_candidates)
+                
+                if second_choice_counts:
+                    max_second_choices = max(second_choice_counts.values())
+                    winners = [c for c, v in second_choice_counts.items() if v == max_second_choices]
+                    
+                    if len(winners) == 1:
+                        self.rounds[-1].is_tie = True
+                        self.rounds[-1].tie_broken = True
+                        return winners[0].name
+
                 self.rounds[-1].is_tie = True
                 return "No winner"
 

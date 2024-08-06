@@ -61,13 +61,14 @@ def run_election(candidates, ballots):
         "name": "Tie-breaking with second choice votes",
         "candidates": ["Dilbert", "Alice", "Wally", "Ted"],
         "ballots": [
-            ["Dilbert", "Alice", "Wally", "Ted"],
-            ["Alice", "Dilbert", "Wally", "Ted"],
-            ["Wally", "Dilbert", "Alice", "Ted"],
-            ["Wally", "Alice", "Dilbert", "Ted"],
+            ["Dilbert", "Ted", "Wally", "Alice"],
             ["Dilbert", "Ted", "Alice", "Wally"],
+            ["Alice", "Ted", "Wally", "Dilbert"],
+            ["Alice", "Ted", "Dilbert", "Wally"],
+            ["Wally", "Ted", "Alice", "Dilbert"],
+            ["Wally", "Ted", "Dilbert", "Alice"],
         ],
-        "expected": "Dilbert"
+        "expected": "Ted"
     }
 ])
 def test_ranked_choice_voting(test_case):
