@@ -1,5 +1,5 @@
 import pytest
-from ranked_choice_voting import Candidate, Election
+from ranked_choice_voting import Candidate, Election, InvalidBallotException
 
 def run_election(candidates, ballots):
     election = Election([Candidate(name) for name in candidates])
@@ -80,14 +80,33 @@ def test_ranked_choice_voting(test_case):
     
     assert winner == test_case["expected"], f"Expected {test_case['expected']}, but got {winner}"
 
-def test_invalid_ballot():
-    with pytest.raises(KeyError):
-        run_election(["Dilbert", "Alice"], [["Dilbert", "Wally"]])
+def test_empty_ballot():
+    election = Election([Candidate("Alice"), Candidate("Bob")])
+    with pytest.raises(InvalidBallotException, match="Ballot is empty"):
+        election.add_ballot([])
 
-def test_empty_election():
-    winner, _ = run_election(["Dilbert", "Alice"], [])
-    assert winner == "No winner"
+def test_duplicate_candidates():
+    election = Election([Candidate("Alice"), Candidate("Bob"), Candidate("Charlie")])
+    with pytest.raises(InvalidBallotException, match="Ballot contains duplicate candidates"):
+        election.add_ballot(["Alice", "Bob", "Alice"])
 
-def test_single_candidate():
-    winner, _ = run_election(["Dilbert"], [["Dilbert"]])
-    assert winner == "Dilbert"
+def test_invalid_candidate():
+    election = Election([Candidate("Alice"), Candidate("Bob")])
+    with pytest.raises(InvalidBallotException, match="Invalid candidate: Charlie"):
+        election.add_ballot(["Alice", "Charlie"])
+
+def test_incomplete_ballot(capsys):
+    election = Election([Candidate("Alice"), Candidate("Bob"), Candidate("Charlie")])
+    election.add_ballot(["Alice", "Bob"])
+    captured = capsys.readouterr()
+    assert "Warning: Ballot has fewer candidates than registered (2 < 3)" in captured.out
+
+def test_valid_ballot():
+    election = Election([Candidate("Alice"), Candidate("Bob"), Candidate("Charlie")])
+    election.add_ballot(["Alice", "Bob", "Charlie"])
+    assert len(election.ballots) == 1
+
+def test_no_valid_ballots():
+    election = Election([Candidate("Alice"), Candidate("Bob")])
+    result = election.run_election()
+    assert result == "No winner"

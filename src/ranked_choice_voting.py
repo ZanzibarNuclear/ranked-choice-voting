@@ -1,5 +1,8 @@
 from collections import defaultdict
 
+class InvalidBallotException(Exception):
+    pass
+
 class Candidate:
     def __init__(self, name):
         self.name = name
@@ -39,7 +42,22 @@ class Election:
         self.ballots = []
         self.rounds = []
 
+    def validate_ballot(self, rankings):
+        if not rankings:
+            raise InvalidBallotException("Ballot is empty")
+
+        if len(rankings) != len(set(rankings)):
+            raise InvalidBallotException("Ballot contains duplicate candidates")
+
+        for candidate in rankings:
+            if candidate not in self.candidates:
+                raise InvalidBallotException(f"Invalid candidate: {candidate}")
+
+        if len(rankings) < len(self.candidates):
+            print(f"Warning: Ballot has fewer candidates than registered ({len(rankings)} < {len(self.candidates)})")
+
     def add_ballot(self, rankings):
+        self.validate_ballot(rankings)
         ballot = Ballot([self.candidates[name] for name in rankings])
         self.ballots.append(ballot)
 
@@ -70,6 +88,10 @@ class Election:
         return len(set(vote_counts.values())) == 1 and len(vote_counts) > 1
 
     def run_election(self):
+        if not self.ballots:
+            print("No valid ballots submitted. Cannot run the election.")
+            return "No winner"
+
         while True:
             vote_counts = self.count_votes()
             
@@ -131,3 +153,5 @@ class Election:
             elif round.eliminated_candidate:
                 print(f"  Eliminated: {round.eliminated_candidate}")
             print()
+
+__all__ = ['Candidate', 'Ballot', 'Round', 'Election', 'InvalidBallotException']
