@@ -52,12 +52,12 @@ def load_election(filename):
 
 def visualize_results(election):
     max_name_length = max(len(candidate.name) for candidate in election.candidates.values())
-    max_votes = max(max(round.vote_counts.values()) for round in election.rounds)
+    max_votes = max(max(votes for votes in round.vote_counts.values()) for round in election.rounds) if election.rounds else 0
     
     for i, round in enumerate(election.rounds, 1):
         print(f"\nRound {i}:")
         for candidate, votes in round.vote_counts.items():
-            bar_length = int((votes / max_votes) * 40)  # Scale to 40 characters max
+            bar_length = int((votes / max_votes) * 40) if max_votes > 0 else 0
             print(f"{candidate.name.ljust(max_name_length)} | {votes:4d} {'█' * bar_length}")
         
         if round.eliminated_candidate:

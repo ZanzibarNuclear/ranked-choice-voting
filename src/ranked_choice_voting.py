@@ -57,12 +57,11 @@ class Election:
             print(f"Warning: Ballot has fewer candidates than registered ({len(rankings)} < {len(self.candidates)})")
 
     def add_ballot(self, rankings):
-        self.validate_ballot(rankings)
         ballot = Ballot([self.candidates[name] for name in rankings])
         self.ballots.append(ballot)
 
     def count_votes(self):
-        counts = defaultdict(int)
+        counts = {candidate: 0 for candidate in self.candidates.values() if not candidate.eliminated}
         for ballot in self.ballots:
             choice = ballot.get_next_choice()
             if choice:
@@ -88,10 +87,6 @@ class Election:
         return len(set(vote_counts.values())) == 1 and len(vote_counts) > 1
 
     def run_election(self):
-        if not self.ballots:
-            print("No valid ballots submitted. Cannot run the election.")
-            return "No winner"
-
         while True:
             vote_counts = self.count_votes()
             
